@@ -3,7 +3,7 @@ import numpy as np
 from pynput.mouse import Button, Controller
 from PIL import ImageGrab
 
-#img = ImageGrab.grab()
+# img = ImageGrab.grab()
 wscrn, hscrn = 1920, 1080
 wCam, hCam = 640, 480
 frameR = 100 # Frame Reduction
@@ -46,29 +46,31 @@ while True:
     result = cv2.bitwise_and(frame, frame, mask=mask)
 
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # Get the largest contour
-    # c = max(contours, key=cv2.contourArea)
+
     # Draw a bounding box around each detected object
-    for contour in contours:
-        x, y, w, h = cv2.boundingRect(contour)
+    if len(contours) > 0:
+        # Get the largest contour
+        c = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(c)
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
         cv2.rectangle(frame, (frameR, frameR), (wCam - frameR, hCam - frameR),
                       (255, 0, 255), 2)
 
         # center points of the detected regions
-        center_x = (x + w) / 2
-        center_y = (y + h) / 2
-        print(f'camera cordinate x == {center_x} y== {center_y}')
+
+        print(f"camera coordinate x == {x} y== {y}")
         scaling_factor = (wscrn / wCam, hscrn / hCam)
-        screen_x, screen_y = (int(center_x * scaling_factor[0]), int(center_y * scaling_factor[1]))
+        screen_x, screen_y = (int(x * scaling_factor[0]), int(y * scaling_factor[1]))
 
         # smoothing
-        #clocX = plocX + (screen_x - plocX) / smoothening
-        #clocY = plocY + (screen_y - plocY) / smoothening
+        clocX = plocX + (screen_x - plocX) / smoothening
+        clocY = plocY + (screen_y - plocY) / smoothening
         mouse = Controller()
         # mouse.move(int(wscrn - clocX), int(clocY))
+        # (wscrn-screen_x) ==> flip the coordinate left right --> mirror effect
         mouse.position = (wscrn-screen_x, screen_y)
+        #mouse.move(screen_x, screen_y)
         print(f'screen coordinate x_cordinate == {screen_x} and y_cordinate == {screen_y}')
         print(f'smoothened value {int(wscrn - clocX)} y_smoth = {int(clocY)}')
 
