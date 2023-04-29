@@ -46,7 +46,7 @@ while True:
     # combining the two mask
     mask_red = cv2.bitwise_or(mask1, mask2)
 
-    yellow_mask = cv2.inRange(frame, yellow_lower, yellow_upper)
+    yellow_mask = cv2.inRange(hsv, yellow_lower, yellow_upper)
 
     # Apply the mask to the original frame to extract the red objects
     result = cv2.bitwise_and(frame, frame, mask=mask_red)
@@ -58,34 +58,45 @@ while True:
     contours, _ = cv2.findContours(mask_red, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours_yellow, _ = cv2.findContours(yellow_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-
-    yellow_max = max(contours_yellow, key=cv2.contourArea)
-    x_yellow, y_yellow, w_yellow, h_yellow = cv2.boundingRect(yellow_max)
-    cv2.rectangle(frame, (x_yellow, y_yellow), (x_yellow + w_yellow, y_yellow+h_yellow), (0, 255, 0), 2)
     # Draw a bounding box around each detected object
     if len(contours) > 0:
+        mouse = Controller()
         # Get the largest contour
         c = max(contours, key=cv2.contourArea)
         x, y, w, h = cv2.boundingRect(c)
+
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        if len(contours_yellow) > 0:
+            # yellow object detected
+            yellow_max = max(contours_yellow, key=cv2.contourArea)
+            x_yellow, y_yellow, w_yellow, h_yellow = cv2.boundingRect(yellow_max)
+            if abs(x - x_yellow) > 50:
+                cv2.rectangle(frame, (x_yellow, y_yellow), (x_yellow + w_yellow, y_yellow + h_yellow), (0, 255, 0), 2)
+            else:
+                cv2.rectangle(frame, (x_yellow, y_yellow), (x_yellow + w_yellow, y_yellow + h_yellow), (0, 0, 225), 2)
+
+
+            if (abs(x - x_yellow) or abs(y - y_yellow)) < 50:
+                print('right clicked')
+                #mouse.press(Button.right)
+                #mouse.release(Button.right)
 
         # center points of the detected regions
-
-        print(f"camera coordinate x == {x} y== {y}")
+        #print(f"camera coordinate x == {x} y== {y}")
         scaling_factor = (wscrn / wCam, hscrn / hCam)
         screen_x, screen_y = (int(x * scaling_factor[0]), int(y * scaling_factor[1]))
 
         # smoothing
         clocX = plocX + (screen_x - plocX) / smoothening
         clocY = plocY + (screen_y - plocY) / smoothening
-        mouse = Controller()
+
         # mouse.move(int(wscrn - clocX), int(clocY))
         # (wscrn-screen_x) ==> flip the coordinate left right --> mirror effect
-        # mouse.position = (wscrn-clocX, clocY)
+        mouse.position = (wscrn-clocX, clocY)
+
         plocX, plocY = clocX, clocY
         # mouse.move(screen_x, screen_y)
-        print(f'screen coordinate x_cordinate == {screen_x} and y_cordinate == {screen_y}')
-        print(f'smoothened value {int(wscrn - clocX)} y_smoth = {int(clocY)}')
+        #print(f'smoothened value {int(wscrn - clocX)} y_smoth = {int(clocY)}')
 
     cv2.imshow('Original', frame)
     cv2.imshow('Red Objects', result)
