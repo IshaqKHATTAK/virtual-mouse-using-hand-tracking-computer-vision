@@ -8,10 +8,10 @@ from tracking import erod_dialate_hsv, create_mask, web_to_screen, smoothing
 wscrn, hscrn = 1920, 1080
 wCam, hCam = 640, 480
 frameR = 100 # Frame Reduction
-smoothening = 7
+smoothening = 10
 plocX, plocY = 0, 0
 clocX, clocY = 0, 0
-
+y_green, y_yellow = 0, 0
 
 # Define the lower and upper bounds for the red color in HSV color space
 lower_red = (0, 210, 50)
@@ -68,9 +68,10 @@ while True:
             else:
                 cv2.rectangle(frame, (x_yellow, y_yellow), (x_yellow + w_yellow, y_yellow + h_yellow), (0, 0, 225), 2)
             if (abs(x - x_yellow) or abs(y - y_yellow)) < 50:
-                print('right clicked')
-                # mouse.press(Button.right)
-                # mouse.release(Button.right)
+
+                # use middle fignure--right clcck
+                mouse.press(Button.right)
+                mouse.release(Button.right)
         if len(contours_green) > 0:
             # green object detected
             green_max = max(contours_green, key=cv2.contourArea)
@@ -81,9 +82,19 @@ while True:
                 cv2.rectangle(frame, (x_green, y_green), (x_green + w_green, y_green + h_green), (0, 0, 225), 2)
 
             if (abs(x - x_green) or abs(y - y_green)) < 50:
-                print('left clicked')
-                # mouse.press(Button.left)
-                # mouse.release(Button.left)
+
+                # use index fingure--left click
+                mouse.press(Button.left)
+                mouse.release(Button.left)
+
+        if(y_green!=0 and y_yellow !=0):
+            if (y_green - y_yellow) > 200:
+                print('mouse scroll up')
+                mouse.scroll(0, 5)
+            if (y_yellow - y_green) > 200:
+                print('mouse scroll down')
+                mouse.scroll(0, -5)
+
 
         # center points of the detected regions
         screen_x, screen_y = web_to_screen(x, y, wscrn, hscrn, wCam, hCam)
@@ -94,9 +105,7 @@ while True:
         plocX, plocY = clocX, clocY
 
     cv2.imshow('Original', frame)
-    cv2.imshow('Red Objects', res_red)
-    cv2.imshow('yellow color', res_yellow)
-    cv2.imshow('green object', res_green)
+
 
     # Wait for a key press and exit if the 'q' key is pressed
     if cv2.waitKey(1) & 0xFF == ord('q'):
